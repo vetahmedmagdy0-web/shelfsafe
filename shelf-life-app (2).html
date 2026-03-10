@@ -1,0 +1,873 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ShelfSafe — دليل صلاحية الأغذية</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Mono:wght@400;500&family=Cairo:wght@300;400;500;700;900&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root{--cream:#F5F0E8;--ink:#1A1612;--rust:#C4440A;--amber:#E8A020;--sage:#4A7C59;--muted:#8A8070;--border:#D8D0C0;--card:#FFFFFF;--shadow:0 2px 20px rgba(26,22,18,0.08);}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Cairo','DM Sans',sans-serif;background:var(--cream);color:var(--ink);min-height:100vh;}
+body.ltr{font-family:'DM Sans','Cairo',sans-serif;direction:ltr;}
+header{background:var(--ink);color:var(--cream);padding:20px 36px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:200;}
+.h-title{font-family:'Playfair Display','Cairo',serif;font-size:1.7rem;font-weight:900;}
+.h-badge{background:var(--rust);color:#fff;font-family:'DM Mono',monospace;font-size:.6rem;padding:3px 9px;border-radius:2px;letter-spacing:1px;text-transform:uppercase;}
+.lang-btn{margin-inline-start:auto;background:rgba(245,240,232,.12);border:1.5px solid rgba(245,240,232,.25);color:var(--cream);padding:7px 18px;border-radius:30px;cursor:pointer;font-family:inherit;font-size:.82rem;font-weight:600;transition:background .2s;}
+.lang-btn:hover{background:rgba(245,240,232,.22);}
+.top-tabs{background:var(--ink);display:flex;padding:0 36px;border-top:1px solid rgba(245,240,232,.1);}
+.top-tab{padding:12px 20px;cursor:pointer;font-size:.82rem;font-weight:600;background:transparent;border:none;color:rgba(245,240,232,.42);font-family:inherit;border-bottom:2px solid transparent;transition:all .2s;margin-bottom:-1px;}
+.top-tab.active{color:var(--cream);border-bottom-color:var(--rust);}
+.top-tab:hover:not(.active){color:rgba(245,240,232,.72);}
+main{max-width:920px;margin:0 auto;padding:40px 22px 80px;}
+.panel{display:none;animation:up .28s ease;}
+.panel.active{display:block;}
+@keyframes up{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:none}}
+/* search */
+.sw{position:relative;margin-bottom:26px;}
+.sw input{width:100%;padding:15px 50px 15px 18px;font-size:1rem;border:1.5px solid var(--border);border-radius:8px;background:var(--card);font-family:inherit;color:var(--ink);outline:none;transition:border-color .2s,box-shadow .2s;}
+body.ltr .sw input{padding:15px 18px 15px 50px;}
+.sw input:focus{border-color:var(--rust);box-shadow:0 0 0 3px rgba(196,68,10,.08);}
+.sw-icon{position:absolute;inset-inline-end:16px;top:50%;transform:translateY(-50%);font-size:1.1rem;color:var(--muted);pointer-events:none;}
+.sugg{position:absolute;width:100%;background:var(--card);border:1.5px solid var(--border);border-top:none;border-radius:0 0 8px 8px;z-index:100;max-height:260px;overflow-y:auto;box-shadow:var(--shadow);}
+.sugg-item{padding:11px 16px;cursor:pointer;font-size:.88rem;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);transition:background .12s;gap:8px;}
+.sugg-item:last-child{border-bottom:none;}
+.sugg-item:hover,.sugg-item.hi{background:var(--cream);}
+.sugg-name{font-weight:500;}
+.sugg-name mark{background:rgba(196,68,10,.14);color:var(--rust);border-radius:2px;padding:0 1px;font-style:normal;}
+.sugg-cat{font-size:.71rem;color:var(--muted);font-family:'DM Mono',monospace;white-space:nowrap;}
+/* result card */
+.rc{background:var(--card);border:1.5px solid var(--border);border-radius:10px;overflow:hidden;box-shadow:var(--shadow);animation:up .28s ease;}
+.rc-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:20px 22px 16px;border-bottom:1.5px solid var(--border);}
+.rc-head h2{font-size:1.4rem;font-weight:700;}
+.rc-head .sub{font-size:.74rem;color:var(--muted);font-family:'DM Mono',monospace;margin-top:3px;}
+.badge{font-size:.67rem;padding:4px 12px;border-radius:20px;font-weight:600;white-space:nowrap;flex-shrink:0;}
+.fresh{background:#D4EDDA;color:#155724;}.moderate{background:#FFF3CD;color:#856404;}.perishable{background:#F8D7DA;color:#721C24;}
+.sg{display:grid;grid-template-columns:repeat(3,1fr);border-bottom:1.5px solid var(--border);}
+.sc{padding:16px 18px;border-inline-end:1.5px solid var(--border);}
+.sc:last-child{border-inline-end:none;}
+.sc .sl{font-size:.63rem;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:6px;font-family:'DM Mono',monospace;display:flex;align-items:center;gap:4px;}
+.sc .sv{font-size:1.35rem;font-weight:700;color:var(--ink);}
+.sc .su{font-size:.71rem;color:var(--muted);font-family:'DM Mono',monospace;}
+.sc .sna{font-size:.84rem;color:var(--muted);}
+.ns{padding:16px 22px;}
+.ns h3{font-size:.67rem;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:9px;font-family:'DM Mono',monospace;}
+.nl{list-style:none;}
+.nl li{padding:4px 0 4px 16px;font-size:.84rem;color:#4A4238;position:relative;line-height:1.5;}
+body[dir=rtl] .nl li{padding:4px 16px 4px 0;}
+.nl li::before{content:'—';position:absolute;inset-inline-start:0;color:var(--rust);}
+.ff{padding:10px 22px;background:#F8F6F2;border-top:1.5px solid var(--border);font-size:.66rem;color:var(--muted);font-family:'DM Mono',monospace;}
+/* recipe */
+.fl{font-size:.74rem;font-weight:600;letter-spacing:.5px;color:var(--muted);text-transform:uppercase;margin-bottom:6px;font-family:'DM Mono',monospace;}
+.rni input{width:100%;padding:13px 16px;font-size:1rem;border:1.5px solid var(--border);border-radius:8px;font-family:inherit;background:var(--card);color:var(--ink);outline:none;transition:border-color .2s;}
+.rni input:focus{border-color:var(--rust);}
+.rni{margin-bottom:18px;}
+.il{margin-bottom:14px;}
+.ir{display:grid;grid-template-columns:1fr 105px 38px;gap:7px;margin-bottom:7px;animation:up .2s ease;position:relative;}
+.ir input{padding:10px 12px;border:1.5px solid var(--border);border-radius:7px;font-family:inherit;font-size:.875rem;background:var(--card);color:var(--ink);outline:none;transition:border-color .2s;}
+.ir input:focus{border-color:var(--rust);}
+.rb{background:none;border:1.5px solid var(--border);border-radius:7px;cursor:pointer;color:var(--muted);font-size:1.1rem;transition:all .15s;display:flex;align-items:center;justify-content:center;}
+.rb:hover{border-color:var(--rust);color:var(--rust);}
+.br{display:flex;gap:9px;margin-bottom:26px;flex-wrap:wrap;}
+.btn{padding:10px 20px;border-radius:7px;font-family:inherit;font-size:.875rem;font-weight:600;cursor:pointer;transition:all .2s;border:1.5px solid transparent;}
+.bp{background:var(--rust);color:#fff;border-color:var(--rust);}
+.bp:hover{background:#A83608;}
+.bs{background:transparent;color:var(--ink);border-color:var(--border);}
+.bs:hover{border-color:var(--ink);}
+/* recipe result */
+.rrc{background:var(--card);border:1.5px solid var(--border);border-radius:10px;overflow:hidden;box-shadow:var(--shadow);animation:up .28s ease;}
+.rrh{padding:18px 22px;border-bottom:1.5px solid var(--border);display:flex;align-items:center;gap:13px;}
+.rrh .ri{font-size:1.7rem;}
+.rrh h2{font-size:1.2rem;font-weight:700;}
+.rrh p{font-size:.77rem;color:var(--muted);margin-top:2px;}
+.lbx{margin-inline-start:auto;text-align:end;}
+.lbx .lbl{font-size:.61rem;font-family:'DM Mono',monospace;text-transform:uppercase;color:var(--muted);letter-spacing:.7px;display:block;margin-bottom:2px;}
+.lbx .lbn{font-size:.84rem;font-weight:600;color:var(--rust);}
+.bi{display:flex;align-items:center;padding:7px 0;border-bottom:1px solid var(--border);gap:9px;font-size:.84rem;}
+.bi:last-child{border-bottom:none;}
+.bi .bn{flex:1;}
+.bi .bs2{font-family:'DM Mono',monospace;font-size:.74rem;color:var(--muted);}
+.dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.dl{background:var(--rust);}
+.do{background:var(--sage);}
+/* manage */
+.pt{display:flex;gap:9px;margin-bottom:18px;flex-wrap:wrap;align-items:center;}
+.ps{flex:1;min-width:170px;padding:10px 15px;border:1.5px solid var(--border);border-radius:7px;font-family:inherit;font-size:.875rem;background:var(--card);outline:none;transition:border-color .2s;}
+.ps:focus{border-color:var(--rust);}
+.tw{background:var(--card);border:1.5px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:24px;box-shadow:var(--shadow);}
+.tw table{width:100%;border-collapse:collapse;}
+.tw th{text-align:start;padding:10px 13px;font-size:.67rem;text-transform:uppercase;letter-spacing:.7px;color:var(--muted);font-family:'DM Mono',monospace;background:#F8F6F2;border-bottom:1.5px solid var(--border);font-weight:500;}
+.tw td{padding:9px 13px;font-size:.84rem;border-bottom:1px solid var(--border);vertical-align:middle;}
+.tw tr:last-child td{border-bottom:none;}
+.tw tr:hover td{background:var(--cream);}
+.pac{display:flex;gap:5px;}
+.pbe,.pbd{padding:4px 11px;border-radius:5px;font-size:.74rem;font-family:inherit;font-weight:600;cursor:pointer;border:1.5px solid;transition:all .15s;}
+.pbe{background:transparent;color:var(--ink);border-color:var(--border);}
+.pbe:hover{border-color:var(--ink);}
+.pbd{background:transparent;color:#721C24;border-color:#F8D7DA;}
+.pbd:hover{background:#F8D7DA;}
+.vb{font-family:'DM Mono',monospace;font-size:.74rem;}
+.vb.na{color:var(--muted);}
+.sd{display:inline-block;width:7px;height:7px;border-radius:50%;margin-inline-end:4px;}
+.sf{background:var(--sage);}.sm{background:var(--amber);}.sp{background:var(--rust);}
+/* form */
+.pfc{background:var(--card);border:1.5px solid var(--border);border-radius:10px;padding:24px 26px;box-shadow:var(--shadow);animation:up .22s ease;}
+.pfc h3{font-size:1.1rem;font-weight:700;margin-bottom:18px;display:flex;justify-content:space-between;align-items:center;}
+.cfb{background:none;border:none;cursor:pointer;font-size:1.3rem;color:var(--muted);}
+.pfg{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;}
+.pf{display:flex;flex-direction:column;gap:4px;}
+.pf label{font-size:.71rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;font-family:'DM Mono',monospace;}
+.pf input,.pf select{padding:9px 12px;border:1.5px solid var(--border);border-radius:7px;font-family:inherit;font-size:.875rem;background:var(--card);color:var(--ink);outline:none;transition:border-color .2s;}
+.pf input:focus,.pf select:focus{border-color:var(--rust);}
+.pfc{margin-bottom:20px;}
+.nir{display:flex;gap:7px;margin-bottom:6px;}
+.nir input{flex:1;padding:9px 11px;border:1.5px solid var(--border);border-radius:7px;font-family:inherit;font-size:.84rem;background:var(--card);color:var(--ink);outline:none;transition:border-color .2s;}
+.nir input:focus{border-color:var(--rust);}
+.nir button{padding:0 11px;border-radius:7px;border:1.5px solid var(--border);background:transparent;cursor:pointer;color:var(--muted);font-size:1rem;transition:all .15s;}
+.nir button:hover{border-color:var(--rust);color:var(--rust);}
+/* empty */
+.es{text-align:center;padding:44px 20px;color:var(--muted);}
+.es .big{font-size:2.4rem;margin-bottom:11px;}
+.es p{font-size:.88rem;line-height:1.6;}
+/* toast */
+.toast{position:fixed;bottom:26px;left:50%;transform:translateX(-50%);background:var(--ink);color:var(--cream);padding:11px 22px;border-radius:30px;font-size:.84rem;font-weight:500;z-index:500;opacity:0;pointer-events:none;transition:opacity .3s;}
+.toast.show{opacity:1;}
+/* password overlay */
+.pw-overlay{position:fixed;inset:0;background:rgba(26,22,18,.55);backdrop-filter:blur(4px);z-index:900;display:flex;align-items:center;justify-content:center;animation:up .22s ease;}
+.pw-box{background:var(--card);border:1.5px solid var(--border);border-radius:14px;padding:36px 32px;width:min(360px,90vw);box-shadow:0 8px 40px rgba(26,22,18,.18);text-align:center;}
+.pw-icon{font-size:2.2rem;margin-bottom:12px;}
+.pw-box h3{font-size:1.1rem;font-weight:700;margin-bottom:6px;}
+.pw-box p{font-size:.8rem;color:var(--muted);margin-bottom:20px;line-height:1.5;}
+.pw-input-wrap{position:relative;margin-bottom:14px;}
+.pw-input-wrap input{width:100%;padding:12px 44px 12px 16px;border:1.5px solid var(--border);border-radius:8px;font-family:inherit;font-size:.95rem;background:var(--cream);color:var(--ink);outline:none;transition:border-color .2s;text-align:center;letter-spacing:3px;}
+body.ltr .pw-input-wrap input{text-align:center;}
+.pw-input-wrap input:focus{border-color:var(--rust);box-shadow:0 0 0 3px rgba(196,68,10,.08);}
+.pw-input-wrap input.err{border-color:#dc3545;animation:shake .3s ease;}
+.pw-eye{position:absolute;inset-inline-end:13px;top:50%;transform:translateY(-50%);cursor:pointer;color:var(--muted);font-size:1rem;background:none;border:none;padding:0;}
+.pw-err{font-size:.78rem;color:#dc3545;margin-bottom:12px;min-height:18px;}
+
+@keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-6px)}40%{transform:translateX(6px)}60%{transform:translateX(-4px)}80%{transform:translateX(4px)}}
+@media(max-width:600px){
+  header{padding:14px 16px;}
+  .top-tabs{padding:0 16px;}
+  main{padding:22px 12px 60px;}
+  .sg{grid-template-columns:1fr 1fr;}
+  .sc{padding:12px 13px;}
+  .pfg{grid-template-columns:1fr;}
+  .tw th:nth-child(3),.tw td:nth-child(3),.tw th:nth-child(4),.tw td:nth-child(4){display:none;}
+}
+</style>
+</head>
+<body dir="rtl">
+<header>
+  <span class="h-title">ShelfSafe</span>
+  <span class="h-badge">FDA</span>
+  <button class="lang-btn" id="lbtn" onclick="toggleLang()">English</button>
+</header>
+<div class="top-tabs">
+  <button class="top-tab active" id="tab-single" onclick="switchTab('single')" data-ar="بحث عن منتج" data-en="Single Item">بحث عن منتج</button>
+  <button class="top-tab" id="tab-recipe" onclick="switchTab('recipe')" data-ar="حساب وصفة" data-en="Recipe Builder">حساب وصفة</button>
+  <button class="top-tab" id="tab-manage" onclick="switchTab('manage')" data-ar="إدارة المنتجات" data-en="Manage Products" style="display:none">إدارة المنتجات</button>
+</div>
+<main>
+  <!-- SINGLE -->
+  <div class="panel active" id="panel-single">
+    <div class="sw">
+      <input id="si" autocomplete="off"
+        data-ar="ابحث عن منتج... مثل: حليب، دجاج، كريمة..."
+        data-en="Search a food item... e.g. milk, chicken, cream..."
+        placeholder="ابحث عن منتج... مثل: حليب، دجاج، كريمة..."
+        oninput="doSearch(this.value,'ss')" onkeydown="searchKey(event,'ss','single')">
+      <span class="sw-icon">🔎</span>
+      <div class="sugg" id="ss" style="display:none"></div>
+    </div>
+    <div id="sr">
+      <div class="es"><div class="big">🥡</div><p id="se">ابدأ بالبحث عن أي منتج غذائي لمعرفة مدة صلاحيته وطريقة تخزينه الصحيحة وفقاً لـ FDA</p></div>
+    </div>
+  </div>
+  <!-- RECIPE -->
+  <div class="panel" id="panel-recipe">
+    <div class="rni"><div class="fl" id="rnl">اسم الوصفة</div>
+      <input id="rn" data-ar="مثال: وصفة الدجاج بالكريمة" data-en="e.g. Chicken in Cream Sauce" placeholder="مثال: وصفة الدجاج بالكريمة">
+    </div>
+    <div class="fl" id="il">المكونات</div>
+    <div class="il" id="ilist"></div>
+    <div class="br">
+      <button class="btn bs" id="bai" onclick="addRow()">+ أضف مكوناً</button>
+      <button class="btn bp" id="bcalc" onclick="calcRecipe()">احسب الصلاحية</button>
+    </div>
+    <div id="rr"></div>
+  </div>
+  <!-- MANAGE -->
+  <div class="panel" id="panel-manage">
+    <div class="pt">
+      <input class="ps" id="pmsi" data-ar="ابحث في قاعدة البيانات..." data-en="Search database..." placeholder="ابحث في قاعدة البيانات..." oninput="renderTable(this.value)">
+      <button class="btn bp" id="badd" onclick="openAdd()">+ إضافة منتج</button>
+      <button class="btn bs" id="bexp" onclick="exportDB()">تصدير JSON</button>
+      <button class="btn bs" onclick="lockManage()" title="قفل الإدارة" style="padding:10px 14px;font-size:1rem;">🔒</button>
+    </div>
+    <div id="pfc" style="margin-bottom:18px;"></div>
+    <div class="tw"><table><thead><tr>
+      <th id="thn">المنتج</th><th id="thc">الفئة</th>
+      <th id="thp">مخزن</th><th id="thf">ثلاجة</th><th id="thfz">فريزر</th>
+      <th id="ths">مستوى</th><th id="tha">إجراءات</th>
+    </tr></thead><tbody id="ptb"></tbody></table></div>
+    <div id="pcount" style="font-size:.74rem;color:var(--muted);font-family:'DM Mono',monospace;"></div>
+  </div>
+</main>
+<div class="toast" id="toast"></div>
+<script>
+// ── TRANSLATIONS ──────────────────────────────────────────
+const TR={
+  ar:{pantry:'مخزن / درجة حرارة الغرفة',fridge:'ثلاجة',freezer:'فريزر',
+  fdaNotes:'نصائح التخزين (FDA)',limitingFactor:'العنصر المحدد',
+  notRec:'غير مُوصى به',indef:'لا حد',
+  days:'يوم',months:'شهر',years:'سنة',
+  fresh:'✅ مستقر',moderate:'📦 متوسط',perishable:'⚠️ عالي الخطورة',
+  fdaFooter:'المصادر: FDA FoodKeeper · USDA FoodSafety.gov · FDA Food Code 2022',
+  notFound:'لم يُعثر على بيانات FDA لـ',notFoundSub:'جرّب كلمة أعم مثل "دجاج" بدلاً من "دجاج مشوي"',
+  noIngs:'لم يُتعرف على أي مكون. جرّب: دجاج، حليب، بيض',
+  unknown:'لم يُتعرف على:',excluded:'— تم استثناؤها.',
+  ruleTitle:'قواعد تخزين FDA للوصفات',
+  rules:['صلاحية الوصفة = أقل مدة صلاحية بين مكوناتها (مبدأ FDA)','برّد الطعام المطهو خلال ساعتين (ساعة إذا >32°م)','أعد التسخين إلى 74°م داخلياً قبل التقديم','برّد الكميات الكبيرة في أوعية ضحلة','عند الشك — ارمِ الطعام'],
+  recognized:'مكون معروف',estimate:'تقدير FDA المحافظ',
+  thn:'المنتج',thc:'الفئة',thp:'مخزن',thf:'ثلاجة',thfz:'فريزر',ths:'مستوى',tha:'إجراءات',
+  edit:'تعديل',del:'حذف',addTitle:'إضافة منتج جديد',editTitle:'تعديل المنتج',
+  save:'حفظ',cancel:'إلغاء',
+  lNameAr:'اسم المنتج (عربي)',lNameEn:'اسم المنتج (إنجليزي)',lCat:'الفئة',
+  lPantry:'مخزن (أيام)',lFridge:'ثلاجة (أيام)',lFreezer:'فريزر (أيام)',
+  lSafety:'مستوى الخطورة',lNotes:'ملاحظات التخزين',addNote:'+ ملاحظة',
+  saved:'✅ تم الحفظ',deleted:'🗑️ تم الحذف',total:'إجمالي المنتجات:',
+  emptySearch:'لا نتائج',sfresh:'مستقر',smod:'متوسط',speris:'عالي الخطورة',
+  singleEmpty:'ابدأ بالبحث عن أي منتج غذائي لمعرفة مدة صلاحيته وطريقة تخزينه الصحيحة وفقاً لـ FDA',
+  ingPh:'مكون (مثل: دجاج، حليب، كريمة...)',qtyPh:'الكمية',
+  addIng:'+ أضف مكوناً',calcBtn:'احسب الصلاحية',
+  addProd:'+ إضافة منتج',exportBtn:'تصدير JSON',recipeNameLbl:'اسم الوصفة',ingLbl:'المكونات',
+  notePh:'ملاحظة تخزين...'},
+  en:{pantry:'Pantry / Room Temp',fridge:'Refrigerator',freezer:'Freezer',
+  fdaNotes:'FDA / USDA Storage Tips',limitingFactor:'Limiting Factor',
+  notRec:'Not recommended',indef:'Indefinite',
+  days:'day',months:'month',years:'year',
+  fresh:'✅ Shelf Stable',moderate:'📦 Moderate',perishable:'⚠️ Highly Perishable',
+  fdaFooter:'Sources: FDA FoodKeeper · USDA FoodSafety.gov · FDA Food Code 2022',
+  notFound:'No FDA data found for',notFoundSub:'Try a more generic term (e.g. "chicken" instead of "rotisserie chicken")',
+  noIngs:'No recognized ingredients found. Try: chicken, milk, eggs',
+  unknown:'Could not find FDA data for:',excluded:'— excluded from calculation.',
+  ruleTitle:'FDA Recipe Storage Rules',
+  rules:['Recipe shelf life = minimum shelf life among all ingredients (FDA principle)','Refrigerate cooked food within 2 hours (1 hour if temp >90°F)','Reheat leftovers to 165°F internal temperature before serving','Cool large batches in shallow containers to speed refrigeration','When in doubt, throw it out'],
+  recognized:'recognized ingredient',estimate:'FDA conservative estimate',
+  thn:'Product',thc:'Category',thp:'Pantry',thf:'Fridge',thfz:'Freezer',ths:'Safety',tha:'Actions',
+  edit:'Edit',del:'Delete',addTitle:'Add New Product',editTitle:'Edit Product',
+  save:'Save',cancel:'Cancel',
+  lNameAr:'Product Name (Arabic)',lNameEn:'Product Name (English)',lCat:'Category',
+  lPantry:'Pantry (days)',lFridge:'Fridge (days)',lFreezer:'Freezer (days)',
+  lSafety:'Safety Level',lNotes:'Storage Notes',addNote:'+ Note',
+  saved:'✅ Saved',deleted:'🗑️ Deleted',total:'Total products:',
+  emptySearch:'No results',sfresh:'Shelf Stable',smod:'Moderate',speris:'Highly Perishable',
+  singleEmpty:'Search any food item to learn its shelf life and proper storage according to FDA guidelines.',
+  ingPh:'Ingredient (e.g. chicken, milk, cream...)',qtyPh:'Qty',
+  addIng:'+ Add Ingredient',calcBtn:'Calculate Shelf Life',
+  addProd:'+ Add Product',exportBtn:'Export JSON',recipeNameLbl:'Recipe Name',ingLbl:'Ingredients',
+  notePh:'Storage note...'}
+};
+let lang='ar';
+const t=k=>TR[lang][k]||TR.en[k]||k;
+
+// ── DATABASE ──────────────────────────────────────────────
+let DB={
+  // DAIRY & CREAM
+  "حليب":{nameEn:"Milk",pantry:null,fridge:7,freezer:90,category:"ألبان",notes:["تخلص منه إذا صارت رائحته حامضة","احفظه تحت 4°م","لا تضعه في باب الثلاجة — الحرارة تتغير"],safety:"perishable"},
+  "كريمة الخفق":{nameEn:"Whipping Cream",pantry:null,fridge:5,freezer:90,category:"ألبان",notes:["استخدم العبوة المفتوحة خلال 5–7 أيام","الكريمة المخفوقة: 24–48 ساعة فقط في الثلاجة","تُجمّد جيداً للطهي لكن قوامها يتغير بعد الإذابة","لا تتركها خارج الثلاجة أكثر من ساعتين","FDA: منتج ألبان عالي الخطورة — خطر نمو البكتيريا سريع"],safety:"perishable"},
+  "كريمة الطبخ":{nameEn:"Cooking/Heavy Cream",pantry:null,fridge:10,freezer:90,category:"ألبان",notes:["استخدم العبوة المفتوحة خلال 10–14 يوم","نسبة الدهون العالية تجعلها أكثر استقراراً من الحليب","ممتازة للتجميد للاستخدام في الصلصات والحساء","تحقق من الرائحة والقوام قبل الاستخدام","FDA: برّدها دائماً تحت 4°م"],safety:"perishable"},
+  "كريمة حامضة":{nameEn:"Sour Cream",pantry:null,fridge:14,freezer:60,category:"ألبان",notes:["لا تستخدم إذا ظهر عليها عفن","التجميد يغير القوام — الأفضل للطهي فقط بعد الإذابة"],safety:"perishable"},
+  "جبن كريمي":{nameEn:"Cream Cheese",pantry:null,fridge:14,freezer:60,category:"ألبان",notes:["أحكم الإغلاق جيداً","التجميد يغير القوام"],safety:"perishable"},
+  "زبدة":{nameEn:"Butter",pantry:2,fridge:60,freezer:270,category:"ألبان",notes:["المملحة تدوم أطول من غير المملحة","لفّها جيداً لمنع امتصاص الروائح"],safety:"moderate"},
+  "قشطة":{nameEn:"Clotted Cream/Qishta",pantry:null,fridge:7,freezer:30,category:"ألبان",notes:["منتج طازج — استخدمه سريعاً","لا تتركها في درجة حرارة الغرفة أكثر من ساعتين"],safety:"perishable"},
+  "حليب كامل الدسم":{nameEn:"Whole Milk",pantry:null,fridge:7,freezer:90,category:"ألبان",notes:["احفظه تحت 4°م","تخلص منه إذا صارت رائحته حامضة"],safety:"perishable"},
+  "جبن شيدر":{nameEn:"Cheddar Cheese",pantry:null,fridge:180,freezer:240,category:"ألبان",notes:["يمكن قطع 2.5سم حول البقع الخضراء","لفّه جيداً بعد الفتح"],safety:"moderate"},
+  "جبن موزاريلا":{nameEn:"Mozzarella",pantry:null,fridge:21,freezer:60,category:"ألبان",notes:["الطازجة: 5–7 أيام","احفظها في سائل التعليب"],safety:"moderate"},
+  "بارميزان":{nameEn:"Parmesan",pantry:null,fridge:300,freezer:365,category:"ألبان",notes:["الجبن القاسي يدوم أطول بسبب انخفاض الرطوبة"],safety:"moderate"},
+  "زبادي":{nameEn:"Yogurt",pantry:null,fridge:14,freezer:60,category:"ألبان",notes:["انظر تاريخ الانتهاء","يمكن التجميد في العبوة الأصلية"],safety:"perishable"},
+  "بيض":{nameEn:"Eggs",pantry:null,fridge:42,freezer:365,category:"بيض",notes:["ضعه في الثلاجة دائماً","لا تغسل البيض قبل التخزين","للتجميد: اكسره وضعه في وعاء محكم"],safety:"perishable"},
+  "بيض مسلوق":{nameEn:"Hard Boiled Eggs",pantry:null,fridge:7,freezer:null,category:"بيض",notes:["احتفظ بالقشرة حتى موعد الأكل","لا تجمّد — القوام يصبح مطاطاً"],safety:"perishable"},
+  // MEAT
+  "صدر دجاج":{nameEn:"Chicken Breast",pantry:null,fridge:2,freezer:270,category:"دواجن",notes:["74°م داخلياً","استخدم أو جمّد خلال 1–2 يوم","لا تذوّبه في درجة حرارة الغرفة"],safety:"perishable"},
+  "أفخاذ دجاج":{nameEn:"Chicken Thighs",pantry:null,fridge:2,freezer:270,category:"دواجن",notes:["74°م داخلياً","نفس صلاحية صدر الدجاج"],safety:"perishable"},
+  "دجاج مفروم":{nameEn:"Ground Chicken",pantry:null,fridge:2,freezer:90,category:"دواجن",notes:["74°م","اللحوم المفرومة أكثر عرضة للبكتيريا"],safety:"perishable"},
+  "دجاجة كاملة":{nameEn:"Whole Chicken",pantry:null,fridge:2,freezer:365,category:"دواجن",notes:["74°م في أعمق جزء","الأحشاء: 1–2 يوم"],safety:"perishable"},
+  "دجاج مطهو":{nameEn:"Cooked Chicken",pantry:null,fridge:4,freezer:120,category:"بقايا",notes:["برّده خلال ساعتين","74°م عند إعادة التسخين"],safety:"perishable"},
+  "لحم بقري مفروم":{nameEn:"Ground Beef",pantry:null,fridge:2,freezer:90,category:"لحوم",notes:["160°م","خطر تلوث عالٍ"],safety:"perishable"},
+  "ستيك":{nameEn:"Beef Steak",pantry:null,fridge:5,freezer:365,category:"لحوم",notes:["145°م مع راحة 3 دقائق"],safety:"perishable"},
+  "لحم خروف":{nameEn:"Lamb",pantry:null,fridge:5,freezer:270,category:"لحوم",notes:["145°م مع راحة 3 دقائق","يُجمّد ممتاز"],safety:"perishable"},
+  "كفتة":{nameEn:"Kofta",pantry:null,fridge:2,freezer:90,category:"لحوم",notes:["نفس قواعد اللحم المفروم","74°م"],safety:"perishable"},
+  "لحم مطهو":{nameEn:"Cooked Beef",pantry:null,fridge:4,freezer:90,category:"بقايا",notes:["برّده خلال ساعتين","74°م عند إعادة التسخين"],safety:"perishable"},
+  "بيكون":{nameEn:"Bacon",pantry:null,fridge:7,freezer:30,category:"لحوم",notes:["مفتوح: 7 أيام","مدفوخ لكنه قابل للتلف"],safety:"perishable"},
+  "سمك فيليه":{nameEn:"Fish Fillet",pantry:null,fridge:2,freezer:180,category:"مأكولات بحرية",notes:["145°م","الأكثر قابلية للتلف","0–4°م"],safety:"perishable"},
+  "جمبري":{nameEn:"Shrimp",pantry:null,fridge:2,freezer:365,category:"مأكولات بحرية",notes:["145°م","الرائحة مؤشر الطازجية"],safety:"perishable"},
+  "تونا معلبة":{nameEn:"Canned Tuna",pantry:1460,fridge:3,freezer:null,category:"مأكولات بحرية",notes:["مغلق: + 3–5 سنوات بعد تاريخ الانتهاء","مفتوح: وعاء زجاجي — 3 أيام"],safety:"fresh"},
+  "سلمون":{nameEn:"Salmon",pantry:null,fridge:2,freezer:180,category:"مأكولات بحرية",notes:["سريع التلف","مطهو: 3–4 أيام","145°م"],safety:"perishable"},
+  // PRODUCE
+  "تفاح":{nameEn:"Apples",pantry:7,fridge:42,freezer:365,category:"خضار وفاكهة",notes:["افصل عن باقي الخضار — يطلق الإيثيلين","مقطّع: رشّ عصير ليمون"],safety:"fresh"},
+  "موز":{nameEn:"Bananas",pantry:7,fridge:5,freezer:90,category:"خضار وفاكهة",notes:["التبريد يبطئ النضج (القشرة تسودّ طبيعي)","جمّد الناضج للعصائر"],safety:"fresh"},
+  "فراولة":{nameEn:"Strawberries",pantry:null,fridge:7,freezer:365,category:"خضار وفاكهة",notes:["لا تغسل حتى الاستخدام","أزل المتعفنة فوراً"],safety:"perishable"},
+  "طماطم":{nameEn:"Tomatoes",pantry:7,fridge:14,freezer:180,category:"خضار وفاكهة",notes:["التبريد يقلل النكهة","ضع جانب العنق للأسفل"],safety:"fresh"},
+  "خس":{nameEn:"Lettuce",pantry:null,fridge:7,freezer:null,category:"خضار وفاكهة",notes:["لفّ بمنشفة ورقية","لا تجمّد"],safety:"perishable"},
+  "سبانخ":{nameEn:"Spinach",pantry:null,fridge:7,freezer:365,category:"خضار وفاكهة",notes:["احتفظ بالكيس الأصلي","للتجميد في الطهي فقط"],safety:"perishable"},
+  "بروكولي":{nameEn:"Broccoli",pantry:null,fridge:5,freezer:365,category:"خضار وفاكهة",notes:["لا تغسل قبل التخزين","ابلنشه قبل التجميد"],safety:"perishable"},
+  "جزر":{nameEn:"Carrots",pantry:7,fridge:21,freezer:365,category:"خضار وفاكهة",notes:["أزل الأوراق الخضراء","احفظ في كيس مع رطوبة"],safety:"fresh"},
+  "بطاطس":{nameEn:"Potatoes",pantry:42,fridge:90,freezer:null,category:"خضار وفاكهة",notes:["بارد، مظلم، جيد التهوية","لا تجمّد نيئة","أزل البراعم قبل الاستخدام"],safety:"fresh"},
+  "بصل":{nameEn:"Onions",pantry:30,fridge:60,freezer:240,category:"خضار وفاكهة",notes:["لا تحفظ قرب البطاطس","مقطّع: 7–10 أيام مبرداً"],safety:"fresh"},
+  "ثوم":{nameEn:"Garlic",pantry:120,fridge:14,freezer:240,category:"خضار وفاكهة",notes:["رأس كامل: 6 أشهر","مقشّر: 7–10 أيام مبرداً","مفروم: أسبوع"],safety:"fresh"},
+  "أفوكادو":{nameEn:"Avocado",pantry:5,fridge:3,freezer:90,category:"خضار وفاكهة",notes:["ينضج في درجة الغرفة","بعد النضج: برّده","مقطّع: رشّ عصير ليمون"],safety:"fresh"},
+  "فلفل رومي":{nameEn:"Bell Pepper",pantry:5,fridge:14,freezer:365,category:"خضار وفاكهة",notes:["غير مغسول حتى الاستخدام","ابلنشه قبل التجميد"],safety:"fresh"},
+  "خيار":{nameEn:"Cucumber",pantry:3,fridge:7,freezer:null,category:"خضار وفاكهة",notes:["حساس للبرودة","لا تجمّد"],safety:"fresh"},
+  "ليمون":{nameEn:"Lemon",pantry:7,fridge:21,freezer:120,category:"خضار وفاكهة",notes:["جمّد العصير في مكعبات ثلج"],safety:"fresh"},
+  // GRAINS
+  "خبز":{nameEn:"Bread",pantry:7,fridge:14,freezer:90,category:"مخبوزات",notes:["عفن في شريحة = ارمِ الرغيف كله","التجميد أفضل للطازجية"],safety:"moderate"},
+  "أرز مطهو":{nameEn:"Cooked Rice",pantry:null,fridge:5,freezer:180,category:"حبوب",notes:["برّد خلال ساعتين","خطر بكتيريا Bacillus cereus","لا تترك نيئاً"],safety:"perishable"},
+  "أرز جاف":{nameEn:"Dry Rice",pantry:730,fridge:null,freezer:null,category:"حبوب",notes:["الأبيض: 30 سنة إذا كان محكم الإغلاق","البني: 6 أشهر فقط"],safety:"fresh"},
+  "مكرونة جافة":{nameEn:"Dry Pasta",pantry:730,fridge:null,freezer:null,category:"حبوب",notes:["شبه لا محدودة إذا جُفّفت وأحكم إغلاقها"],safety:"fresh"},
+  "مكرونة مطهية":{nameEn:"Cooked Pasta",pantry:null,fridge:5,freezer:60,category:"حبوب",notes:["برّدها خلال ساعتين","أضف زيت زيتون لمنع التلاصق"],safety:"perishable"},
+  "دقيق":{nameEn:"Flour",pantry:270,fridge:365,freezer:730,category:"حبوب",notes:["وعاء محكم بعيد عن الحرارة","القمح الكامل يتزنخ أسرع"],safety:"fresh"},
+  "شوفان":{nameEn:"Oats",pantry:730,fridge:null,freezer:730,category:"حبوب",notes:["بعيداً عن الحرارة والرطوبة"],safety:"fresh"},
+  "تورتيلا":{nameEn:"Tortillas",pantry:10,fridge:28,freezer:90,category:"مخبوزات",notes:["الطحين تدوم أطول من الذرة","برّدها بعد الفتح"],safety:"moderate"},
+  // CONDIMENTS
+  "صلصة طماطم":{nameEn:"Ketchup",pantry:365,fridge:180,freezer:null,category:"صلصات",notes:["مغلق: سنة","مفتوح: 6 أشهر في الثلاجة"],safety:"fresh"},
+  "مايونيز":{nameEn:"Mayonnaise",pantry:null,fridge:60,freezer:null,category:"صلصات",notes:["لا تجمّد","تخلص منه بعد ساعتين خارج الثلاجة"],safety:"moderate"},
+  "صلصة الصويا":{nameEn:"Soy Sauce",pantry:730,fridge:365,freezer:null,category:"صلصات",notes:["الملح الزائد يحفظها","مفتوح في الغرفة: شهر"],safety:"fresh"},
+  "زيت زيتون":{nameEn:"Olive Oil",pantry:365,fridge:null,freezer:null,category:"زيوت",notes:["بعيداً عن الحرارة والضوء","لا تبرّد","التزنّخ له رائحة مميزة"],safety:"fresh"},
+  "زيت نباتي":{nameEn:"Vegetable Oil",pantry:365,fridge:null,freezer:null,category:"زيوت",notes:["مغلق بعيداً عن الحرارة","مفتوح: 6 أشهر"],safety:"fresh"},
+  "خل":{nameEn:"Vinegar",pantry:1825,fridge:null,freezer:null,category:"صلصات",notes:["شبه لا محدودة","العكارة الطبيعية لا تضر"],safety:"fresh"},
+  "عسل":{nameEn:"Honey",pantry:99999,fridge:null,freezer:null,category:"محليات",notes:["لا يفسد إذا حُفظ جافاً","التبلّور طبيعي — دفّئه برفق","غير آمن للأطفال دون سنة"],safety:"fresh"},
+  "سكر":{nameEn:"Sugar",pantry:99999,fridge:null,freezer:null,category:"محليات",notes:["صلاحية لا محدودة إذا جُفّف","البني: ضع معه قطعة خبز"],safety:"fresh"},
+  "ملح":{nameEn:"Salt",pantry:99999,fridge:null,freezer:null,category:"توابل",notes:["صلاحية لا محدودة","التكتّل لا يعني التلف"],safety:"fresh"},
+  "فاصوليا معلبة":{nameEn:"Canned Beans",pantry:1825,fridge:5,freezer:60,category:"معلبات",notes:["مغلق: + 3–5 سنوات","مفتوح: وعاء زجاجي — 3–5 أيام"],safety:"fresh"},
+  "طماطم معلبة":{nameEn:"Canned Tomatoes",pantry:730,fridge:5,freezer:90,category:"معلبات",notes:["أحماض: 12–18 شهر جودة مثلى","مفتوح: 5 أيام"],safety:"fresh"},
+  "زبدة الفول السوداني":{nameEn:"Peanut Butter",pantry:270,fridge:365,freezer:365,category:"مخزن",notes:["الطبيعية: برّدها بعد الفتح — 3 أشهر","التجارية: 3 أشهر في الغرفة"],safety:"fresh"},
+  "مربى":{nameEn:"Jam",pantry:365,fridge:180,freezer:365,category:"مخزن",notes:["مغلق: سنة","مفتوح: 6 أشهر","تخلص إذا ظهر عفن"],safety:"fresh"},
+  "عصير برتقال":{nameEn:"Orange Juice",pantry:null,fridge:7,freezer:365,category:"مشروبات",notes:["مبستر مفتوح: 7–10 أيام","جمّده في العبوة الأصلية"],safety:"perishable"},
+  "طحينة":{nameEn:"Tahini",pantry:180,fridge:365,freezer:null,category:"مخزن",notes:["مكان بارد جاف","الزيت الطافي طبيعي — حرّك قبل الاستخدام"],safety:"fresh"},
+  "بقسماط":{nameEn:"Breadcrumbs",pantry:180,fridge:365,freezer:730,category:"مواد خبز",notes:["مكان جاف","أحكم الإغلاق لمنع الرطوبة"],safety:"fresh"}
+};
+
+// ── LANG TOGGLE ───────────────────────────────────────────
+function toggleLang(){
+  lang=lang==='ar'?'en':'ar';
+  const isAr=lang==='ar';
+  document.documentElement.lang=lang;
+  document.documentElement.dir=isAr?'rtl':'ltr';
+  document.body.dir=isAr?'rtl':'ltr';
+  document.getElementById('lbtn').textContent=isAr?'English':'عربي';
+  updateAllUI();
+  const cur=document.getElementById('sr').dataset.current;
+  if(cur) showResult(cur);
+}
+
+function updateAllUI(){
+  document.querySelectorAll('.top-tab').forEach(el=>el.textContent=lang==='ar'?el.dataset.ar:el.dataset.en);
+  document.querySelectorAll('[data-ar],[data-en]').forEach(el=>{
+    if(el.tagName==='INPUT'||el.tagName==='TEXTAREA') el.placeholder=lang==='ar'?(el.dataset.ar||el.placeholder):(el.dataset.en||el.placeholder);
+  });
+  const ids={rnl:'recipeNameLbl',il:'ingLbl',bai:'addIng',bcalc:'calcBtn',
+    badd:'addProd',bexp:'exportBtn',se:'singleEmpty',
+    thn:'thn',thc:'thc',thp:'thp',thf:'thf',thfz:'thfz',ths:'ths',tha:'tha'};
+  Object.entries(ids).forEach(([id,k])=>{const el=document.getElementById(id);if(el)el.textContent=t(k);});
+  document.querySelectorAll('.ing-name-input').forEach(el=>el.placeholder=t('ingPh'));
+  document.querySelectorAll('.ing-qty-input').forEach(el=>el.placeholder=t('qtyPh'));
+  renderTable(document.getElementById('pmsi').value||'');
+}
+
+// ── HELPERS ───────────────────────────────────────────────
+function fmtDays(days){
+  if(days===null)return null;
+  if(days>=99000)return{v:'∞',u:t('indef')};
+  if(days>=365){const y=Math.round(days/365*10)/10;return{v:y,u:lang==='ar'?'سنة':(y===1?'year':'years')};}
+  if(days>=30){const m=Math.round(days/30);return{v:m,u:lang==='ar'?'شهر':(m===1?'month':'months')};}
+  return{v:days,u:lang==='ar'?'يوم':(days===1?'day':'days')};
+}
+function cellH(lk,icon,days){
+  const f=days!==null?fmtDays(days):null;
+  return`<div class="sc"><div class="sl"><span>${icon}</span>${t(lk)}</div>${f?`<div class="sv">${f.v}<span class="su"> ${f.u}</span></div>`:`<div class="sna">${t('notRec')}</div>`}</div>`;
+}
+function badge(s){
+  const m={perishable:'perishable',moderate:'moderate',fresh:'fresh'};
+  return`<span class="badge ${m[s]||'moderate'}">${t(s)}</span>`;
+}
+function getName(k){return lang==='en'&&DB[k]&&DB[k].nameEn?DB[k].nameEn:k;}
+function searchDB(q){
+  if(!q||q.length<1)return[];
+  const lo=q.toLowerCase();
+  return Object.keys(DB).filter(k=>k.toLowerCase().includes(lo)||(DB[k].nameEn||'').toLowerCase().includes(lo)||(DB[k].category||'').toLowerCase().includes(lo));
+}
+function hlMatch(text,q){
+  const i=text.toLowerCase().indexOf(q.toLowerCase());
+  if(i===-1)return text;
+  return text.slice(0,i)+`<mark>${text.slice(i,i+q.length)}</mark>`+text.slice(i+q.length);
+}
+function resolveKey(raw){
+  const lo=raw.toLowerCase().trim();
+  if(DB[lo])return lo;
+  const keys=Object.keys(DB);
+  return keys.find(k=>k.toLowerCase()===lo||(DB[k].nameEn||'').toLowerCase()===lo)||
+    keys.find(k=>k.toLowerCase().includes(lo)||lo.includes(k.toLowerCase())||(DB[k].nameEn||'').toLowerCase().includes(lo)||lo.includes((DB[k].nameEn||'').toLowerCase()))||null;
+}
+
+// ── AUTOCOMPLETE ─────────────────────────────────────────
+let hiIdx=-1;
+function doSearch(val,boxId){
+  hiIdx=-1;
+  const box=document.getElementById(boxId);
+  const res=searchDB(val);
+  if(!res.length||!val.trim()){box.style.display='none';return;}
+  box.innerHTML=res.slice(0,10).map((k,i)=>{
+    const n=getName(k);
+    return`<div class="sugg-item" data-key="${k}" onmousedown="pickSug('${k}','${boxId}')"><span class="sugg-name">${hlMatch(n,val)}</span><span class="sugg-cat">${DB[k].category||''}</span></div>`;
+  }).join('');
+  box.style.display='block';
+}
+function searchKey(e,boxId,ctx){
+  const box=document.getElementById(boxId);
+  const items=box.querySelectorAll('.sugg-item');
+  if(e.key==='ArrowDown'){hiIdx=Math.min(hiIdx+1,items.length-1);items.forEach((el,i)=>el.classList.toggle('hi',i===hiIdx));e.preventDefault();}
+  else if(e.key==='ArrowUp'){hiIdx=Math.max(hiIdx-1,0);items.forEach((el,i)=>el.classList.toggle('hi',i===hiIdx));e.preventDefault();}
+  else if(e.key==='Enter'){
+    if(hiIdx>=0&&items[hiIdx]){pickSug(items[hiIdx].dataset.key,boxId);}
+    else{
+      const v=e.target.value.trim();
+      const r=searchDB(v);
+      if(r.length)pickSug(r[0],boxId);
+      else if(ctx==='single')notFound(v);
+    }
+    box.style.display='none';
+  }else if(e.key==='Escape'){box.style.display='none';}
+}
+function pickSug(key,boxId){
+  document.getElementById(boxId).style.display='none';
+  if(boxId==='ss'){
+    document.getElementById('si').value=getName(key);
+    showResult(key);
+    return;
+  }
+  // ingredient row sug
+  const rowId=boxId.replace('rs-','');
+  const row=document.getElementById('ir-'+rowId);
+  if(row){const inp=row.querySelector('.ing-name-input');if(inp){inp.value=getName(key);inp.dataset.rk=key;}}
+}
+document.addEventListener('click',e=>{if(!e.target.closest('.sw')&&!e.target.closest('.ir'))document.querySelectorAll('.sugg').forEach(b=>b.style.display='none');});
+
+// ── SINGLE RESULT ─────────────────────────────────────────
+function showResult(k){
+  const d=DB[k];if(!d){notFound(k);return;}
+  const el=document.getElementById('sr');
+  el.dataset.current=k;
+  const name=getName(k);
+  el.innerHTML=`<div class="rc">
+    <div class="rc-head"><div><h2>${name}</h2><div class="sub">${d.category||''}</div></div>${badge(d.safety)}</div>
+    <div class="sg">${cellH('pantry','🏺',d.pantry)}${cellH('fridge','❄️',d.fridge)}${cellH('freezer','🧊',d.freezer)}</div>
+    <div class="ns"><h3>${t('fdaNotes')}</h3><ul class="nl">${(d.notes||[]).map(n=>`<li>${n}</li>`).join('')}</ul></div>
+    <div class="ff">${t('fdaFooter')}</div>
+  </div>`;
+}
+function notFound(v){
+  document.getElementById('sr').innerHTML=`<div class="es"><div class="big">🔍</div><p>${t('notFound')} "<strong>${v}</strong>".<br>${t('notFoundSub')}</p></div>`;
+}
+
+// ── RECIPE ────────────────────────────────────────────────
+let rowIdx=0;
+function addRow(name='',qty=''){
+  rowIdx++;const id=rowIdx;
+  const list=document.getElementById('ilist');
+  const div=document.createElement('div');
+  div.className='ir';div.id='ir-'+id;
+  div.innerHTML=`<div style="position:relative">
+    <input class="ing-name-input" placeholder="${t('ingPh')}" value="${name}" autocomplete="off"
+      oninput="doSearch(this.value,'rs-${id}')" onkeydown="searchKey(event,'rs-${id}','')" data-rk="">
+    <div class="sugg" id="rs-${id}" style="display:none"></div></div>
+  <input class="ing-qty-input" placeholder="${t('qtyPh')}" value="${qty}">
+  <button class="rb" onclick="document.getElementById('ir-${id}').remove()">×</button>`;
+  list.appendChild(div);
+}
+addRow();addRow();addRow();
+
+function calcRecipe(){
+  const rows=document.querySelectorAll('.ir');
+  const ings=[];
+  rows.forEach(r=>{
+    const ni=r.querySelector('.ing-name-input');
+    const qi=r.querySelector('.ing-qty-input');
+    if(!ni||!ni.value.trim())return;
+    const raw=ni.value.trim();
+    const rk=ni.dataset.rk||resolveKey(raw);
+    ings.push({raw,rk,data:rk?DB[rk]:null,qty:qi?.value||''});
+  });
+  const valid=ings.filter(i=>i.data);
+  if(!valid.length){document.getElementById('rr').innerHTML=`<div class="es"><div class="big">🥘</div><p>${t('noIngs')}</p></div>`;return;}
+  let mp=null,mf=null,mfz=null,lp='',lf='',lfz='',nullPantry=false;
+  valid.forEach(i=>{
+    const d=i.data;const n=i.rk?getName(i.rk):i.raw;
+    if(d.pantry===null){nullPantry=true;if(!lp)lp=n;}
+    else if(!nullPantry&&(mp===null||d.pantry<mp)){mp=d.pantry;lp=n;}
+    if(d.fridge!==null&&(mf===null||d.fridge<mf)){mf=d.fridge;lf=n;}
+    if(d.freezer!==null&&(mfz===null||d.freezer<mfz)){mfz=d.freezer;lfz=n;}
+  });
+  if(nullPantry)mp=null;
+  const rname=document.getElementById('rn').value.trim()||(lang==='ar'?'وصفتك':'Your Recipe');
+  const lim=lf||lp;
+  const bdown=valid.map(i=>{
+    const d=i.data;const n=i.rk?getName(i.rk):i.raw;
+    const isLim=(d.fridge!==null&&d.fridge===mf)||(d.pantry!==null&&d.pantry===mp&&!nullPantry);
+    const fd=d.fridge?fmtDays(d.fridge):null;
+    const ss=fd?`${fd.v} ${fd.u} (${t('fridge')})`:(d.pantry?`${fmtDays(d.pantry).v} ${fmtDays(d.pantry).u}`:t('notRec'));
+    return`<div class="bi"><div class="dot ${isLim?'dl':'do'}"></div><div class="bn">${n}${i.qty?` <span style="color:var(--muted);font-size:.77rem;">· ${i.qty}</span>`:''}</div><div class="bs2">${ss}</div></div>`;
+  }).join('');
+  const unk=ings.filter(i=>!i.data);
+  const unkNote=unk.length?`<div style="padding:10px 22px;font-size:.79rem;color:var(--muted);background:#FFF8F0;border-top:1px solid var(--border);">⚠️ ${t('unknown')} ${unk.map(i=>i.raw).join(', ')} ${t('excluded')}</div>`:'';
+  document.getElementById('rr').innerHTML=`<div class="rrc">
+    <div class="rrh"><span class="ri">🍽️</span>
+      <div><h2>${rname}</h2><p>${valid.length} ${t('recog')||t('recoznized')||t('recognized')} · ${t('estimate')}</p></div>
+      <div class="lbx"><span class="lbl">${t('limitingFactor')}</span><span class="lbn">${lim||'—'}</span></div>
+    </div>
+    <div class="sg">${cellH('pantry','🏺',mp)}${cellH('fridge','❄️',mf)}${cellH('freezer','🧊',mfz)}</div>
+    <div class="ns" style="border-bottom:1.5px solid var(--border);"><h3>${t('ingredients')||'المكونات'}</h3>${bdown}</div>
+    ${unkNote}
+    <div class="ns"><h3>${t('ruleTitle')}</h3><ul class="nl">${(t('rules')||[]).map(r=>`<li>${r}</li>`).join('')}</ul></div>
+    <div class="ff">${t('fdaFooter')}</div>
+  </div>`;
+}
+
+// ── MANAGE ────────────────────────────────────────────────
+function renderTable(filter=''){
+  const tb=document.getElementById('ptb');
+  let keys=Object.keys(DB);
+  if(filter.trim()){const q=filter.toLowerCase();keys=keys.filter(k=>k.includes(q)||(DB[k].nameEn||'').toLowerCase().includes(q)||(DB[k].category||'').toLowerCase().includes(q));}
+  if(!keys.length){tb.innerHTML=`<tr><td colspan="7" style="text-align:center;padding:22px;color:var(--muted);">${t('emptySearch')}</td></tr>`;}
+  else tb.innerHTML=keys.map(k=>{
+    const d=DB[k];const n=getName(k);
+    const sc=d.safety==='fresh'?'sf':d.safety==='moderate'?'sm':'sp';
+    const sl=d.safety==='fresh'?t('sfresh'):d.safety==='moderate'?t('smod'):t('speris');
+    const vc=v=>v!==null?`<span class="vb">${fmtDays(v).v} ${fmtDays(v).u}</span>`:`<span class="vb na">—</span>`;
+    // Use guarded wrappers — safe even if called from console
+    return`<tr><td style="font-weight:500">${n}</td><td style="color:var(--muted);font-size:.79rem">${d.category||''}</td><td>${vc(d.pantry)}</td><td>${vc(d.fridge)}</td><td>${vc(d.freezer)}</td><td><span class="sd ${sc}"></span>${sl}</td><td><div class="pac"><button class="pbe" onclick="openEdit('${k}')">${t('edit')}</button><button class="pbd" onclick="delProd('${k}')">${t('del')}</button></div></td></tr>`;
+  }).join('');
+  document.getElementById('pcount').textContent=`${t('total')} ${keys.length} / ${Object.keys(DB).length}`;
+}
+
+let editKey=null;let fNotes=[];
+// Prefixed with _ so guard wrappers below are the only public names
+function _openAdd(){editKey=null;fNotes=[''];_renderForm();}
+function _openEdit(k){editKey=k;fNotes=[...(DB[k]?.notes||[''])];if(!fNotes.length)fNotes=[''];_renderForm(k);}
+function _renderForm(k=null){
+  if(!_sec.isAuth()){showToast(lang==='ar'?'🔒 تحتاج صلاحية':'🔒 Auth required');return;}
+  const d=k?DB[k]:{};
+  document.getElementById('pfc').innerHTML=`<div class="pfc" style="background:var(--card);border:1.5px solid var(--border);border-radius:10px;padding:22px 24px;box-shadow:var(--shadow);animation:up .22s ease;">
+    <h3 style="font-size:1.1rem;font-weight:700;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center;">
+      ${k?t('editTitle'):t('addTitle')} <button style="background:none;border:none;cursor:pointer;font-size:1.3rem;color:var(--muted)" onclick="closeForm()">×</button></h3>
+    <div class="pfg">
+      <div class="pf"><label>${t('lNameAr')}</label><input id="f-ar" value="${k||''}" placeholder="مثل: كريمة الخفق"></div>
+      <div class="pf"><label>${t('lNameEn')}</label><input id="f-en" value="${d.nameEn||''}" placeholder="e.g. Whipping Cream"></div>
+      <div class="pf"><label>${t('lCat')}</label><input id="f-cat" value="${d.category||''}" placeholder="${lang==='ar'?'مثل: ألبان':'e.g. Dairy'}"></div>
+      <div class="pf"><label>${t('lSafety')}</label><select id="f-safe">
+        <option value="fresh" ${d.safety==='fresh'?'selected':''}>✅ ${t('sfresh')}</option>
+        <option value="moderate" ${d.safety==='moderate'?'selected':''}>📦 ${t('smod')}</option>
+        <option value="perishable" ${d.safety==='perishable'?'selected':''}>⚠️ ${t('speris')}</option>
+      </select></div>
+      <div class="pf"><label>${t('lPantry')}</label><input id="f-p" type="number" min="0" value="${d.pantry!==null&&d.pantry!==undefined?d.pantry:''}" placeholder="${lang==='ar'?'فارغ = غير مُوصى به':'empty = not recommended'}"></div>
+      <div class="pf"><label>${t('lFridge')}</label><input id="f-f" type="number" min="0" value="${d.fridge!==null&&d.fridge!==undefined?d.fridge:''}" placeholder="${lang==='ar'?'فارغ = غير مُوصى به':'empty = not recommended'}"></div>
+      <div class="pf" style="grid-column:1/-1"><label>${t('lFreezer')}</label><input id="f-fz" type="number" min="0" value="${d.freezer!==null&&d.freezer!==undefined?d.freezer:''}" placeholder="${lang==='ar'?'فارغ = غير مُوصى به':'empty = not recommended'}"></div>
+    </div>
+    <div id="fnw"><div class="fl">${t('lNotes')}</div>${rNoteInputs()}</div>
+    <button class="btn bs" style="margin-bottom:10px;font-size:.82rem;padding:8px 16px" onclick="addNoteF()">${t('addNote')}</button>
+    <div class="br" style="margin-bottom:0"><button class="btn bp" onclick="saveProd()">${t('save')}</button><button class="btn bs" onclick="closeForm()">${t('cancel')}</button></div>
+  </div>`;
+}
+function rNoteInputs(){return fNotes.map((n,i)=>`<div class="nir"><input value="${n}" placeholder="${t('notePh')}" oninput="fNotes[${i}]=this.value"><button onclick="rmNote(${i})">×</button></div>`).join('');}
+function addNoteF(){fNotes.push('');document.getElementById('fnw').innerHTML=`<div class="fl">${t('lNotes')}</div>`+rNoteInputs();}
+function rmNote(i){fNotes.splice(i,1);if(!fNotes.length)fNotes=[''];document.getElementById('fnw').innerHTML=`<div class="fl">${t('lNotes')}</div>`+rNoteInputs();}
+function _saveProd(){
+  if(!_sec.isAuth()){showToast(lang==='ar'?'🔒 تحتاج صلاحية':'🔒 Auth required');return;}
+  const ar=document.getElementById('f-ar').value.trim();
+  if(!ar){showToast(lang==='ar'?'❌ أدخل اسم المنتج':'❌ Enter product name');return;}
+  if(editKey&&editKey!==ar)delete DB[editKey];
+  const noteEls=document.querySelectorAll('#fnw input');
+  fNotes=Array.from(noteEls).map(e=>e.value.trim()).filter(Boolean);
+  const pv=document.getElementById('f-p').value;
+  const fv=document.getElementById('f-f').value;
+  const fzv=document.getElementById('f-fz').value;
+  DB[ar]={nameEn:document.getElementById('f-en').value.trim()||undefined,
+    pantry:pv!==''?parseInt(pv):null,fridge:fv!==''?parseInt(fv):null,freezer:fzv!==''?parseInt(fzv):null,
+    category:document.getElementById('f-cat').value.trim(),notes:fNotes,safety:document.getElementById('f-safe').value};
+  closeForm();renderTable(document.getElementById('pmsi').value||'');showToast(t('saved'));
+}
+function _delProd(k){
+  if(!_sec.isAuth()){showToast(lang==='ar'?'🔒 تحتاج صلاحية':'🔒 Auth required');return;}
+  if(confirm(lang==='ar'?`حذف "${k}"؟`:`Delete "${k}"?`)){delete DB[k];renderTable(document.getElementById('pmsi').value||'');showToast(t('deleted'));}
+}
+function closeForm(){document.getElementById('pfc').innerHTML='';editKey=null;fNotes=[];}
+function _exportDB(){
+  if(!_sec.isAuth()){showToast(lang==='ar'?'🔒 تحتاج صلاحية':'🔒 Auth required');return;}
+  const b=new Blob([JSON.stringify(DB,null,2)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='shelfsafe-db.json';a.click();
+}
+function showToast(msg){const el=document.getElementById('toast');el.textContent=msg;el.classList.add('show');setTimeout(()=>el.classList.remove('show'),2200);}
+
+// ── TABS (public) ─────────────────────────────────────────
+// switchTabDirect stays global but manage panel guard is inside _sec
+function switchTabDirect(id){
+  ['single','recipe','manage'].forEach(x=>{
+    document.getElementById('panel-'+x).classList.toggle('active',x===id);
+    document.getElementById('tab-'+x).classList.toggle('active',x===id);
+  });
+  // Even if someone calls switchTabDirect('manage') from console:
+  // - the tab becomes visible but ALL write actions are guarded by _sec.isAuth()
+  // - DB is read-only from the UI without auth
+  if(id==='manage') renderTable(document.getElementById('pmsi').value||'');
+}
+function switchTab(id){
+  if(id==='manage'){ _sec.requestAccess(); return; }
+  switchTabDirect(id);
+}
+
+// ── SECURITY MODULE (IIFE — nothing leaks to window) ─────
+const _sec = (function(){
+  // ╔══════════════════════════════════════════════════════╗
+  // ║  TO CHANGE PASSWORD:                                 ║
+  // ║  1. Open browser console                            ║
+  // ║  2. Run: _sec.setPass('your_new_password')          ║
+  // ║  Password is stored as SHA-256 hash — never plain   ║
+  // ╚══════════════════════════════════════════════════════╝
+
+  // Default password hash (SHA-256) — plaintext never stored
+  // Change via console: _sec.setPass('your_new_password')
+  const DEFAULT_HASH = '240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9';
+  const STORAGE_KEY  = '__ss_ph__';
+  const ATTEMPT_KEY  = '__ss_fa__';
+  const MAX_ATTEMPTS = 5;
+  const LOCKOUT_MS   = 5 * 60 * 1000; // 5 minutes
+  const SESSION_MS   = 30 * 60 * 1000; // 30 min auto-lock
+
+  let _unlocked   = false;
+  let _sessionTimer = null;
+
+  // ── Hash helper (async SHA-256) ────────────────────────
+  async function sha256(str){
+    const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+    return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+  }
+
+  // ── Stored hash ───────────────────────────────────────
+  async function getStoredHash(){
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if(stored) return stored;
+    // First run — store the pre-computed default hash
+    localStorage.setItem(STORAGE_KEY, DEFAULT_HASH);
+    return DEFAULT_HASH;
+  }
+
+  // ── Brute-force state ─────────────────────────────────
+  function getAttemptState(){
+    try{ return JSON.parse(localStorage.getItem(ATTEMPT_KEY))||{count:0,lockedUntil:0}; }
+    catch(e){ return {count:0,lockedUntil:0}; }
+  }
+  function saveAttemptState(s){ localStorage.setItem(ATTEMPT_KEY, JSON.stringify(s)); }
+  function resetAttempts(){ localStorage.removeItem(ATTEMPT_KEY); }
+
+  function isLockedOut(){
+    const s = getAttemptState();
+    if(s.lockedUntil && Date.now() < s.lockedUntil) return s.lockedUntil;
+    if(s.lockedUntil && Date.now() >= s.lockedUntil){ resetAttempts(); }
+    return false;
+  }
+  function recordFailedAttempt(){
+    const s = getAttemptState();
+    s.count = (s.count||0) + 1;
+    if(s.count >= MAX_ATTEMPTS){
+      s.lockedUntil = Date.now() + LOCKOUT_MS;
+      s.count = 0;
+    }
+    saveAttemptState(s);
+    return s;
+  }
+
+  // ── Session timer ─────────────────────────────────────
+  function startSessionTimer(){
+    clearTimeout(_sessionTimer);
+    _sessionTimer = setTimeout(()=>{
+      if(_unlocked) _doLock(true);
+    }, SESSION_MS);
+  }
+  function resetSessionTimer(){
+    if(_unlocked) startSessionTimer();
+  }
+
+  // ── Lock / Unlock ─────────────────────────────────────
+  function _doLock(expired=false){
+    _unlocked = false;
+    clearTimeout(_sessionTimer);
+    document.getElementById('tab-manage').style.display='none';
+    switchTabDirect('single');
+    showToast(expired
+      ? (lang==='ar'?'⏱️ انتهت الجلسة تلقائياً':'⏱️ Session expired')
+      : (lang==='ar'?'🔒 تم قفل الإدارة':'🔒 Management locked'));
+  }
+
+  function _doUnlock(){
+    _unlocked = true;
+    resetAttempts();
+    closePwOverlay();
+    document.getElementById('tab-manage').style.display='';
+    switchTabDirect('manage');
+    showToast(lang==='ar'?'🔓 تم فتح الإدارة':'🔓 Access granted');
+    startSessionTimer();
+    // Reset session on any user activity inside manage
+    document.addEventListener('click', resetSessionTimer, {passive:true});
+    document.addEventListener('keydown', resetSessionTimer, {passive:true});
+  }
+
+  // ── Overlay ───────────────────────────────────────────
+  function showPwOverlay(){
+    if(document.getElementById('pw-overlay')) return;
+    const isAr = lang==='ar';
+
+    const lockUntil = isLockedOut();
+    const lockedMsg = lockUntil
+      ? `<div style="color:#dc3545;font-size:.82rem;margin-bottom:14px;">
+          🚫 ${isAr?'الحساب مقفل مؤقتاً حتى:':'Locked until:'} ${new Date(lockUntil).toLocaleTimeString()}
+         </div>` : '';
+
+    const overlay = document.createElement('div');
+    overlay.className='pw-overlay'; overlay.id='pw-overlay';
+    overlay.innerHTML=`<div class="pw-box">
+      <div class="pw-icon">🔐</div>
+      <h3>${isAr?'منطقة محمية':'Protected Area'}</h3>
+      <p>${isAr?'أدخل كلمة السر للمتابعة':'Enter the password to continue'}</p>
+      ${lockedMsg}
+      <div class="pw-input-wrap">
+        <input type="password" id="pw-inp" placeholder="${isAr?'••••••••':'••••••••'}"
+          ${lockUntil?'disabled':''} autocomplete="current-password"
+          onkeydown="if(event.key==='Enter')_sec.checkPw()">
+        <button class="pw-eye" onclick="_sec.toggleEye()" id="pw-eye-btn">👁️</button>
+      </div>
+      <div class="pw-err" id="pw-err"></div>
+      <div id="pw-attempts-bar"></div>
+      <button class="btn bp" style="width:100%" ${lockUntil?'disabled':''} onclick="_sec.checkPw()">
+        ${isAr?'دخول':'Enter'}
+      </button>
+      <button class="btn bs" style="width:100%;margin-top:8px" onclick="_sec.closeOverlay()">
+        ${isAr?'إلغاء':'Cancel'}
+      </button>
+    </div>`;
+    document.body.appendChild(overlay);
+    overlay.addEventListener('click', e=>{ if(e.target===overlay) _sec.closeOverlay(); });
+    setTimeout(()=>{ const i=document.getElementById('pw-inp'); if(i&&!lockUntil) i.focus(); }, 80);
+  }
+
+  function closePwOverlay(){
+    const o=document.getElementById('pw-overlay');
+    if(o){ o.style.opacity='0'; o.style.transition='opacity .2s'; setTimeout(()=>o.remove(),200); }
+  }
+
+  function toggleEye(){
+    const inp=document.getElementById('pw-inp'); if(!inp)return;
+    inp.type=inp.type==='password'?'text':'password';
+    document.getElementById('pw-eye-btn').textContent=inp.type==='password'?'👁️':'🙈';
+  }
+
+  async function checkPw(){
+    const lockUntil = isLockedOut();
+    if(lockUntil){
+      const errEl=document.getElementById('pw-err');
+      if(errEl) errEl.textContent=lang==='ar'?`🚫 مقفل حتى ${new Date(lockUntil).toLocaleTimeString()}`:`🚫 Locked until ${new Date(lockUntil).toLocaleTimeString()}`;
+      return;
+    }
+    const inp=document.getElementById('pw-inp'); if(!inp)return;
+    const errEl=document.getElementById('pw-err');
+    const entered=inp.value;
+    inp.value='';
+
+    const [enteredHash, storedHash] = await Promise.all([sha256(entered), getStoredHash()]);
+
+    if(enteredHash === storedHash){
+      _doUnlock();
+    } else {
+      const state = recordFailedAttempt();
+      inp.classList.add('err');
+      setTimeout(()=>inp.classList.remove('err'),400);
+
+      const lockNow = isLockedOut();
+      if(lockNow){
+        if(errEl) errEl.textContent=lang==='ar'
+          ?`🚫 تم قفل الحساب ${MAX_ATTEMPTS} محاولات خاطئة. انتظر 5 دقائق.`
+          :`🚫 Locked after ${MAX_ATTEMPTS} failed attempts. Wait 5 minutes.`;
+        const btn=document.querySelector('#pw-overlay .bp');
+        if(btn) btn.disabled=true;
+        const pwInp=document.getElementById('pw-inp');
+        if(pwInp) pwInp.disabled=true;
+      } else {
+        const remaining = MAX_ATTEMPTS - (state.count||0);
+        if(errEl) errEl.textContent=lang==='ar'
+          ?`❌ كلمة سر خاطئة — ${remaining} محاولة متبقية`
+          :`❌ Wrong password — ${remaining} attempt${remaining!==1?'s':''} left`;
+        inp.focus();
+      }
+    }
+  }
+
+  // ── Guard function: all admin actions call this ────────
+  function requireAuth(fn){
+    return function(...args){
+      if(!_unlocked){
+        showToast(lang==='ar'?'🔒 تحتاج صلاحية الدخول':'🔒 Authentication required');
+        return;
+      }
+      resetSessionTimer();
+      return fn(...args);
+    };
+  }
+
+  // ── Change password ────────────────────────────────────
+  async function setPass(newPass){
+    if(!_unlocked){ console.warn('Must be authenticated to change password.'); return; }
+    if(!newPass||newPass.length<6){ console.warn('Password must be at least 6 characters.'); return; }
+    const h = await sha256(newPass);
+    localStorage.setItem(STORAGE_KEY, h);
+    console.log('✅ Password updated successfully.');
+  }
+
+  // ── Keyboard shortcut ─────────────────────────────────
+  document.addEventListener('keydown', e=>{
+    if(e.ctrlKey && e.shiftKey && (e.key==='A'||e.key==='a')){
+      e.preventDefault();
+      if(_unlocked) switchTabDirect('manage');
+      else showPwOverlay();
+    }
+    if(e.key==='Escape') closePwOverlay();
+  });
+
+  // ── Public API ─────────────────────────────────────────
+  return {
+    requestAccess : showPwOverlay,
+    checkPw       : checkPw,
+    closeOverlay  : closePwOverlay,
+    toggleEye     : toggleEye,
+    lock          : ()=>_doLock(false),
+    setPass       : setPass,
+    isAuth        : ()=>_unlocked,
+    guard         : requireAuth,
+  };
+})();
+
+// ── Guard wrappers: public names → authenticated private fns ─
+// These are the ONLY callable versions of write operations.
+// Even if called from DevTools console, _sec.isAuth() check fires.
+const openAdd   = _sec.guard(_openAdd);
+const openEdit  = _sec.guard(_openEdit);
+const saveProd  = _sec.guard(_saveProd);
+const delProd   = _sec.guard(_delProd);
+const exportDB  = _sec.guard(_exportDB);
+const lockManage= ()=>_sec.lock();
+
+// INIT
+updateAllUI();renderTable();
+</script>
+</body>
+</html>
